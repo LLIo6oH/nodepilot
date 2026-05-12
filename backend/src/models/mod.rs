@@ -1,9 +1,8 @@
-#![allow(dead_code)]
-
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[allow(dead_code)]
 pub struct User {
     pub id: Uuid,
     pub email: String,
@@ -23,6 +22,7 @@ pub struct Agent {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[allow(dead_code)]
 pub struct Message {
     pub id: Uuid,
     pub agent_id: Uuid,
@@ -43,19 +43,32 @@ pub struct AgentEvent {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum AgentStatus {
-    Pending,
-    Running,
-    Succeeded,
-    Failed,
+    Requested,
+    Launching,
+    Booting,
+    Configuring,
+    Ready,
 }
 
 impl AgentStatus {
     pub fn as_str(&self) -> &'static str {
         match self {
-            Self::Pending => "pending",
-            Self::Running => "running",
-            Self::Succeeded => "succeeded",
-            Self::Failed => "failed",
+            Self::Requested => "requested",
+            Self::Launching => "launching",
+            Self::Booting => "booting",
+            Self::Configuring => "configuring",
+            Self::Ready => "ready",
+        }
+    }
+
+    pub fn from_str(value: &str) -> Option<Self> {
+        match value {
+            "requested" => Some(Self::Requested),
+            "launching" => Some(Self::Launching),
+            "booting" => Some(Self::Booting),
+            "configuring" => Some(Self::Configuring),
+            "ready" => Some(Self::Ready),
+            _ => None,
         }
     }
 }

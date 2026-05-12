@@ -1,1 +1,2 @@
-// Event streaming module placeholder (SSE wiring comes later).
+pub mod broadcaster;
+pub mod sse;

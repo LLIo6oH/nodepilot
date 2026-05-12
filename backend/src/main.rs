@@ -9,17 +9,23 @@ mod tools;
 
 use std::net::SocketAddr;
 
-use axum::{Router, routing::get};
+use axum::{
+    Router,
+    routing::{get, post},
+};
 use sqlx::SqlitePool;
 use tower_http::cors::{Any, CorsLayer};
 use tower_http::trace::TraceLayer;
 use tracing::{error, info};
 use tracing_subscriber::EnvFilter;
 
+use crate::events::broadcaster::EventBroadcaster;
+
 #[derive(Clone, Debug)]
 pub struct AppState {
     pub service_name: String,
     pub db: SqlitePool,
+    pub events: EventBroadcaster,
 }
 
 #[tokio::main]
@@ -43,6 +49,7 @@ async fn main() {
     let state = AppState {
         service_name: "nodepilot-backend".to_string(),
         db,
+        events: EventBroadcaster::new(),
     };
 
     let app = build_router(state);
@@ -81,6 +88,18 @@ fn build_router(state: AppState) -> Router {
 
     Router::new()
         .route("/health", get(api::health::health_check))
+        .route(
+            "/agents",
+            post(agents::handlers::create_agent).get(agents::handlers::list_agents),
+        )
+        .route(
+            "/agents/{id}/provision",
+            post(agents::handlers::provision_agent),
+        )
+        .route(
+            "/agents/{id}/events",
+            get(agents::handlers::stream_agent_events),
+        )
         .with_state(state)
         .layer(cors)
         .layer(TraceLayer::new_for_http())

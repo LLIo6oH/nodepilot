@@ -30,7 +30,7 @@ mod tests {
     use super::*;
     use sqlx::SqlitePool;
 
-    use crate::storage;
+    use crate::{events::broadcaster::EventBroadcaster, storage};
 
     #[tokio::test]
     async fn health_check_reports_database_ok() {
@@ -45,6 +45,7 @@ mod tests {
         let state = AppState {
             service_name: "nodepilot-backend".to_string(),
             db: pool,
+            events: EventBroadcaster::new(),
         };
 
         let Json(body) = health_check(State(state))

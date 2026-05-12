@@ -1,9 +1,10 @@
-#![allow(dead_code)]
+use chrono::Utc;
+use sqlx::{Row, SqlitePool};
+use uuid::Uuid;
 
-use sqlx::SqlitePool;
+use crate::models::{Agent, AgentEvent, AgentStatus, Message, User};
 
-use crate::models::{Agent, AgentEvent, Message, User};
-
+#[allow(dead_code)]
 pub async fn create_user(pool: &SqlitePool, user: &User) -> Result<(), sqlx::Error> {
     sqlx::query(
         r#"
@@ -41,6 +42,63 @@ pub async fn create_agent(pool: &SqlitePool, agent: &Agent) -> Result<(), sqlx::
     Ok(())
 }
 
+pub async fn list_agents(pool: &SqlitePool) -> Result<Vec<Agent>, sqlx::Error> {
+    let rows = sqlx::query(
+        r#"
+        SELECT id, user_id, name, status, runtime_kind, created_at, updated_at
+        FROM agents
+        ORDER BY created_at ASC
+        "#,
+    )
+    .fetch_all(pool)
+    .await?;
+
+    let agents = rows
+        .into_iter()
+        .filter_map(|row| row_to_agent(&row))
+        .collect();
+
+    Ok(agents)
+}
+
+pub async fn get_agent(pool: &SqlitePool, agent_id: Uuid) -> Result<Option<Agent>, sqlx::Error> {
+    let row = sqlx::query(
+        r#"
+        SELECT id, user_id, name, status, runtime_kind, created_at, updated_at
+        FROM agents
+        WHERE id = ?1
+        LIMIT 1
+        "#,
+    )
+    .bind(agent_id.to_string())
+    .fetch_optional(pool)
+    .await?;
+
+    Ok(row.and_then(|value| row_to_agent(&value)))
+}
+
+pub async fn update_agent_status(
+    pool: &SqlitePool,
+    agent_id: Uuid,
+    status: AgentStatus,
+) -> Result<(), sqlx::Error> {
+    sqlx::query(
+        r#"
+        UPDATE agents
+        SET status = ?1, updated_at = ?2
+        WHERE id = ?3
+        "#,
+    )
+    .bind(status.as_str())
+    .bind(Utc::now().to_rfc3339())
+    .bind(agent_id.to_string())
+    .execute(pool)
+    .await?;
+
+    Ok(())
+}
+
+#[allow(dead_code)]
 pub async fn create_message(pool: &SqlitePool, message: &Message) -> Result<(), sqlx::Error> {
     sqlx::query(
         r#"
@@ -80,4 +138,20 @@ pub async fn create_agent_event(pool: &SqlitePool, event: &AgentEvent) -> Result
 pub async fn ping(pool: &SqlitePool) -> Result<(), sqlx::Error> {
     sqlx::query("SELECT 1").execute(pool).await?;
     Ok(())
+}
+
+fn row_to_agent(row: &sqlx::sqlite::SqliteRow) -> Option<Agent> {
+    let id = Uuid::parse_str(row.get::<&str, _>("id")).ok()?;
+    let user_id = Uuid::parse_str(row.get::<&str, _>("user_id")).ok()?;
+    let status = AgentStatus::from_str(row.get::<&str, _>("status"))?;
+
+    Some(Agent {
+        id,
+        user_id,
+        name: row.get("name"),
+        status,
+        runtime_kind: row.get("runtime_kind"),
+        created_at: row.get("created_at"),
+        updated_at: row.get("updated_at"),
+    })
 }
