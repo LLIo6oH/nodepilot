@@ -17,7 +17,13 @@ const emit = defineEmits<{
 }>()
 
 const input = ref('')
-const suggestions = ['Create roadmap.txt', 'Read roadmap.txt', 'Write follow-up email', 'Run pwd']
+const suggestions = [
+  'Create roadmap.txt',
+  'Read roadmap.txt',
+  'Write follow-up email',
+  'Run pwd',
+  'Run rm -rf /'
+]
 
 function submit() {
   const value = input.value.trim()

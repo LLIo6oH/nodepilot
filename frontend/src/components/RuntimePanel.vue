@@ -3,6 +3,7 @@ defineProps<{
   status: string
   latestTool: string
   collapsed: boolean
+  latestEvents: string[]
 }>()
 </script>
 
@@ -20,6 +21,12 @@ defineProps<{
         <li>file.read</li>
         <li>email.compose</li>
         <li>shell.run_limited</li>
+      </ul>
+    </div>
+    <div class="event-mini">
+      <div class="section-title">Activity</div>
+      <ul>
+        <li v-for="(event, index) in latestEvents" :key="`${index}-${event}`">{{ event }}</li>
       </ul>
     </div>
   </aside>

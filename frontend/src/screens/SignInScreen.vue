@@ -1,4 +1,9 @@
 <script setup lang="ts">
+const props = defineProps<{
+  loading: boolean
+  error: string
+}>()
+
 const emit = defineEmits<{
   (e: 'launch'): void
 }>()
@@ -22,6 +27,9 @@ const emit = defineEmits<{
       <input placeholder="Password" type="password" />
     </div>
 
-    <button class="cta" @click="emit('launch')">Create account &amp; launch Atlas</button>
+    <p v-if="props.error" class="ui-error">{{ props.error }}</p>
+    <button class="cta" :disabled="props.loading" @click="emit('launch')">
+      {{ props.loading ? 'Launching Atlas...' : 'Create account & launch Atlas' }}
+    </button>
   </section>
 </template>

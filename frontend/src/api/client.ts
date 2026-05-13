@@ -11,17 +11,31 @@ export class ClientError extends Error {
   }
 }
 
+function parseJsonSafely(text: string): unknown {
+  if (!text) return null
+  try {
+    return JSON.parse(text)
+  } catch {
+    return null
+  }
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...(init?.headers ?? {})
-    },
-    ...init
-  })
+  let response: Response
+  try {
+    response = await fetch(`${API_BASE_URL}${path}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(init?.headers ?? {})
+      },
+      ...init
+    })
+  } catch {
+    throw new ClientError('backend unavailable', 503)
+  }
 
   const text = await response.text()
-  const data = text ? JSON.parse(text) : null
+  const data = parseJsonSafely(text)
 
   if (!response.ok) {
     const errorMessage = (data as ApiError | null)?.error ?? `request failed with status ${response.status}`

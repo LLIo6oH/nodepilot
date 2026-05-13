@@ -1,100 +1,73 @@
-## Backend (Rust + Axum)
+## NodePilot MVP
 
-### Environment
+NodePilot is a cloud-resident personal AI runtime prototype with:
+- Rust + Axum backend
+- Vue 3 + TypeScript frontend
+- SQLite persistence
+- Atlas agent provisioning lifecycle
+- SSE runtime events
+- deterministic tool-routed chat
 
-- `DATABASE_URL` (optional): SQLite connection string.
-- Default: `sqlite://nodepilot.sqlite`
-- `WORKSPACES_DIR` (optional): agent workspace root.
-- Default: `../workspaces` (relative to `backend/`)
+## Local Development
 
-### Run backend
-
-```bash
-cd backend
-cargo run
-```
-
-Backend API: `http://localhost:8080`
-
-### Workspace behavior
-
-Each agent gets:
-
-- `workspaces/<agent_id>/`
-
-Workspace is created automatically when provisioning starts or first chat tool interaction occurs.
-
-### Supported tools
-
-- `file.write`
-- `file.read`
-- `email.compose`
-- `shell.run_limited` (`pwd`, `ls`, `whoami`, `date`, `uname` only)
-
-## Frontend (Vue 3 + TypeScript + Vite)
-
-### Run frontend
+### Terminal 1 (backend)
 
 ```bash
-cd frontend
-npm install
-npm run dev
+cd backend && cargo run
 ```
 
-Frontend app: `http://localhost:5173`
+Backend URL: `http://localhost:8080`
 
-To build production assets:
+### Terminal 2 (frontend)
 
 ```bash
-cd frontend
-npm run build
+cd frontend && npm install
+cd frontend && npm run dev
 ```
 
-### Demo flow
+Frontend URL: `http://localhost:5173`
 
-1. Open frontend and click `Create account & launch Atlas`.
-2. Atlas is created via `POST /agents` and provisioning starts via `POST /agents/{id}/provision`.
-3. Provisioning screen subscribes to `GET /agents/{id}/events` (SSE).
-4. When Atlas is ready, open workspace and send chat prompts.
-5. Chat calls `POST /agents/{id}/chat` and shows tool responses.
-
-### API examples
+## Build Checks
 
 ```bash
-# Health
-curl http://localhost:8080/health
-
-# Create agent
-curl -X POST http://localhost:8080/agents \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Atlas"}'
-
-# List agents
-curl http://localhost:8080/agents
-
-# Start provisioning
-curl -X POST http://localhost:8080/agents/<agent_id>/provision
-
-# Stream events (SSE)
-curl -N http://localhost:8080/agents/<agent_id>/events
-
-# Chat: file.write
-curl -X POST http://localhost:8080/agents/<agent_id>/chat \
-  -H "Content-Type: application/json" \
-  -d '{"message":"Create a file named roadmap.txt with startup goals"}'
-
-# Chat: file.read
-curl -X POST http://localhost:8080/agents/<agent_id>/chat \
-  -H "Content-Type: application/json" \
-  -d '{"message":"Read roadmap.txt"}'
-
-# Chat: email.compose
-curl -X POST http://localhost:8080/agents/<agent_id>/chat \
-  -H "Content-Type: application/json" \
-  -d '{"message":"Write an interview follow-up email"}'
-
-# Chat: shell.run_limited
-curl -X POST http://localhost:8080/agents/<agent_id>/chat \
-  -H "Content-Type: application/json" \
-  -d '{"message":"Run pwd"}'
+cd backend && cargo check
+cd frontend && npm run build
 ```
+
+## Demo Flow
+
+1. Launch frontend at `http://localhost:5173`.
+2. Click `Create account & launch Atlas`.
+3. Watch provisioning updates from SSE event stream.
+4. Click `Open workspace` when Atlas is ready.
+5. Try prompts:
+- `Create roadmap.txt`
+- `Read roadmap.txt`
+- `Write follow-up email`
+- `Run pwd`
+- `Try blocked shell command` (`Run rm -rf /`)
+
+## Backend API
+
+- `GET /health`
+- `POST /agents`
+- `POST /agents/{id}/provision`
+- `GET /agents/{id}/events`
+- `POST /agents/{id}/chat`
+
+## Supported Tool Routing
+
+- `Create a file named roadmap.txt with startup goals` -> `file.write`
+- `Read roadmap.txt` -> `file.read`
+- `Write an interview follow-up email` -> `email.compose`
+- `Run pwd` -> `shell.run_limited`
+- `Run rm -rf /` -> blocked with error
+
+## Known Limitations
+
+- Demo auth only (no real authentication provider).
+- Provisioning is simulated.
+- Workspace is local sandbox storage.
+- Tool routing is deterministic (no LLM planner yet).
+- No real MCP / Gmail / OAuth integrations yet.
+- No real per-agent EC2 runtime yet.

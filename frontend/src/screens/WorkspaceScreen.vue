@@ -15,6 +15,8 @@ const props = defineProps<{
   latestTool: string
   runtimeCollapsed: boolean
   pending: boolean
+  latestEvents: string[]
+  error: string
 }>()
 
 const emit = defineEmits<{
@@ -38,8 +40,14 @@ const emit = defineEmits<{
           <button @click="emit('reset')">Reset demo</button>
         </div>
       </header>
+      <p v-if="props.error" class="ui-error">{{ props.error }}</p>
       <ChatPanel :messages="props.messages" :pending="props.pending" @send="emit('send', $event)" />
     </main>
-    <RuntimePanel :status="props.status" :latest-tool="props.latestTool" :collapsed="props.runtimeCollapsed" />
+    <RuntimePanel
+      :status="props.status"
+      :latest-tool="props.latestTool"
+      :collapsed="props.runtimeCollapsed"
+      :latest-events="props.latestEvents"
+    />
   </section>
 </template>
