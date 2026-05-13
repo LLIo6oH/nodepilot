@@ -7,32 +7,56 @@
 - `WORKSPACES_DIR` (optional): agent workspace root.
 - Default: `../workspaces` (relative to `backend/`)
 
-### Run locally
+### Run backend
 
 ```bash
 cd backend
 cargo run
 ```
 
-Backend API listens on `http://localhost:8080`.
+Backend API: `http://localhost:8080`
 
 ### Workspace behavior
 
-Each agent gets a workspace directory:
+Each agent gets:
 
 - `workspaces/<agent_id>/`
 
-Workspace is created automatically on:
+Workspace is created automatically when provisioning starts or first chat tool interaction occurs.
 
-- provisioning start (`POST /agents/{id}/provision`), or
-- first chat/tool interaction (`POST /agents/{id}/chat`)
+### Supported tools
 
-### Supported tools (deterministic routing)
+- `file.write`
+- `file.read`
+- `email.compose`
+- `shell.run_limited` (`pwd`, `ls`, `whoami`, `date`, `uname` only)
 
-- `file.write`: create/update files in agent workspace.
-- `file.read`: read files from agent workspace.
-- `email.compose`: create drafts under `drafts/email_<timestamp>.md`.
-- `shell.run_limited`: allowlist only `pwd`, `ls`, `whoami`, `date`, `uname`.
+## Frontend (Vue 3 + TypeScript + Vite)
+
+### Run frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Frontend app: `http://localhost:5173`
+
+To build production assets:
+
+```bash
+cd frontend
+npm run build
+```
+
+### Demo flow
+
+1. Open frontend and click `Create account & launch Atlas`.
+2. Atlas is created via `POST /agents` and provisioning starts via `POST /agents/{id}/provision`.
+3. Provisioning screen subscribes to `GET /agents/{id}/events` (SSE).
+4. When Atlas is ready, open workspace and send chat prompts.
+5. Chat calls `POST /agents/{id}/chat` and shows tool responses.
 
 ### API examples
 
@@ -51,26 +75,26 @@ curl http://localhost:8080/agents
 # Start provisioning
 curl -X POST http://localhost:8080/agents/<agent_id>/provision
 
-# Stream lifecycle/tool events (SSE)
+# Stream events (SSE)
 curl -N http://localhost:8080/agents/<agent_id>/events
 
-# Chat: file write
+# Chat: file.write
 curl -X POST http://localhost:8080/agents/<agent_id>/chat \
   -H "Content-Type: application/json" \
-  -d '{"message":"create a file named roadmap.txt"}'
+  -d '{"message":"Create a file named roadmap.txt with startup goals"}'
 
-# Chat: file read
+# Chat: file.read
 curl -X POST http://localhost:8080/agents/<agent_id>/chat \
   -H "Content-Type: application/json" \
-  -d '{"message":"read roadmap.txt"}'
+  -d '{"message":"Read roadmap.txt"}'
 
-# Chat: email compose
+# Chat: email.compose
 curl -X POST http://localhost:8080/agents/<agent_id>/chat \
   -H "Content-Type: application/json" \
-  -d '{"message":"write an interview follow-up email"}'
+  -d '{"message":"Write an interview follow-up email"}'
 
-# Chat: limited shell
+# Chat: shell.run_limited
 curl -X POST http://localhost:8080/agents/<agent_id>/chat \
   -H "Content-Type: application/json" \
-  -d '{"message":"pwd"}'
+  -d '{"message":"Run pwd"}'
 ```
