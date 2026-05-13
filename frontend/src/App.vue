@@ -5,14 +5,18 @@ import { ClientError, api, eventsUrl } from './api/client'
 import type { EventPayload } from './api/types'
 import ProvisioningScreen from './screens/ProvisioningScreen.vue'
 import SignInScreen from './screens/SignInScreen.vue'
+import SubmissionLandingScreen from './screens/SubmissionLandingScreen.vue'
 import WorkspaceScreen from './screens/WorkspaceScreen.vue'
 
 type Screen = 'signin' | 'provisioning' | 'workspace'
+type RouteView = 'landing' | 'app'
 type ChatMessage = { role: 'user' | 'assistant' | 'error'; content: string; toolUsed?: string }
 
 const STORAGE_KEY = 'nodepilot_agent_id'
+const APP_PATH = '/app'
 
 const screen = ref<Screen>('signin')
+const routeView = ref<RouteView>('landing')
 const agentId = ref<string | null>(null)
 const backendStatus = ref('requested')
 const eventLogs = ref<string[]>([])
@@ -64,6 +68,17 @@ function mapStep(message: string): number {
   if (lower.includes('connecting tools') || lower.includes('registering tools')) return 4
   if (lower.includes('online') || lower.includes('ready')) return 5
   return stepIndex.value
+}
+
+function syncRouteView() {
+  routeView.value = window.location.pathname === APP_PATH ? 'app' : 'landing'
+}
+
+function openApp() {
+  if (window.location.pathname !== APP_PATH) {
+    window.history.pushState({}, '', APP_PATH)
+  }
+  routeView.value = 'app'
 }
 
 function connectEvents(id: string) {
@@ -155,6 +170,11 @@ function resetDemo() {
 }
 
 onMounted(async () => {
+  syncRouteView()
+  window.addEventListener('popstate', syncRouteView)
+
+  if (routeView.value !== 'app') return
+
   const saved = localStorage.getItem(STORAGE_KEY)
   if (!saved) return
 
@@ -189,6 +209,7 @@ watch([ready, screen], ([isReady, currentScreen]) => {
 })
 
 onBeforeUnmount(() => {
+  window.removeEventListener('popstate', syncRouteView)
   clearReadyTransitionTimer()
   cleanupEvents()
 })
@@ -197,31 +218,34 @@ onBeforeUnmount(() => {
 <template>
   <AppShell>
     <div class="app-frame">
-      <SignInScreen v-if="screen === 'signin'" :loading="launchPending" :error="uiError" @launch="launchAtlas" />
-      <ProvisioningScreen
-        v-else-if="screen === 'provisioning'"
-        :current-step="stepIndex"
-        :steps="steps"
-        :ready="ready"
-        :logs="eventLogs"
-        :expanded="showLogs"
-        :starting-provision="provisionPending"
-        :error="uiError"
-        @toggle-logs="showLogs = !showLogs"
-      />
-      <WorkspaceScreen
-        v-else
-        :status="displayStatus"
-        :messages="messages"
-        :latest-tool="latestTool"
-        :runtime-collapsed="runtimeCollapsed"
-        :pending="chatPending"
-        :latest-events="latestEvents"
-        :error="uiError"
-        @send="sendChat"
-        @toggle-runtime="runtimeCollapsed = !runtimeCollapsed"
-        @reset="resetDemo"
-      />
+      <SubmissionLandingScreen v-if="routeView === 'landing'" @open-demo="openApp" />
+      <template v-else>
+        <SignInScreen v-if="screen === 'signin'" :loading="launchPending" :error="uiError" @launch="launchAtlas" />
+        <ProvisioningScreen
+          v-else-if="screen === 'provisioning'"
+          :current-step="stepIndex"
+          :steps="steps"
+          :ready="ready"
+          :logs="eventLogs"
+          :expanded="showLogs"
+          :starting-provision="provisionPending"
+          :error="uiError"
+          @toggle-logs="showLogs = !showLogs"
+        />
+        <WorkspaceScreen
+          v-else
+          :status="displayStatus"
+          :messages="messages"
+          :latest-tool="latestTool"
+          :runtime-collapsed="runtimeCollapsed"
+          :pending="chatPending"
+          :latest-events="latestEvents"
+          :error="uiError"
+          @send="sendChat"
+          @toggle-runtime="runtimeCollapsed = !runtimeCollapsed"
+          @reset="resetDemo"
+        />
+      </template>
     </div>
   </AppShell>
 </template>
