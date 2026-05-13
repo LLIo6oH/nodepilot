@@ -18,11 +18,10 @@ const emit = defineEmits<{
 
 const input = ref('')
 const suggestions = [
-  'Create roadmap.txt',
-  'Read roadmap.txt',
-  'Write follow-up email',
-  'Run pwd',
-  'Run rm -rf /'
+  'Draft an investor update',
+  'Audit my workspace',
+  'Research a competitor',
+  'Summarize today\'s events'
 ]
 
 function submit() {
@@ -39,36 +38,26 @@ function useSuggestion(value: string) {
 
 <template>
   <section class="chat-panel card">
-    <header class="chat-header">
-      <div>
-        <h2>Atlas</h2>
-        <p>Dedicated runtime channel</p>
-      </div>
-    </header>
-
     <div class="chat-body">
       <div v-if="messages.length === 0" class="empty">
         <h3>Atlas is ready when you are.</h3>
-        <p>
-          Ask anything. Atlas can read and write files, run safe shell commands in its sandbox, and
-          draft emails.
-        </p>
+        <p>Ask anything. Atlas can read/write files, run safe shell commands, browse, and keep context.</p>
         <div class="suggestions">
-          <button v-for="s in suggestions" :key="s" @click="useSuggestion(s)">{{ s }}</button>
+          <button v-for="s in suggestions" :key="s" class="pill" @click="useSuggestion(s)">{{ s }}</button>
         </div>
       </div>
       <div v-else class="messages">
         <article v-for="(message, idx) in props.messages" :key="idx" :class="['msg', message.role]">
           <div class="role">{{ message.role }}</div>
           <div>{{ message.content }}</div>
-          <small v-if="message.toolUsed">tool: {{ message.toolUsed }}</small>
+          <small v-if="message.toolUsed" class="mono">tool: {{ message.toolUsed }}</small>
         </article>
       </div>
     </div>
 
     <footer class="chat-input-wrap">
       <input v-model="input" placeholder="Ask Atlas to run a tool..." @keydown.enter="submit" />
-      <button :disabled="pending" @click="submit">{{ pending ? 'Sending...' : 'Send' }}</button>
+      <button class="cta" :disabled="pending" @click="submit">{{ pending ? 'Sending...' : 'Send' }}</button>
     </footer>
   </section>
 </template>

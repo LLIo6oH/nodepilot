@@ -29,15 +29,15 @@ const emit = defineEmits<{
 <template>
   <section class="workspace-layout">
     <Sidebar :status="props.status" />
-    <main>
+    <main class="workspace-main">
       <header class="workspace-header card">
-        <div>
+        <div class="workspace-title">
           <h1>Atlas</h1>
           <p>{{ props.status }} · personal runtime channel</p>
         </div>
         <div class="header-actions">
-          <button @click="emit('toggleRuntime')">Toggle runtime panel</button>
-          <button @click="emit('reset')">Reset demo</button>
+          <button class="ghost" @click="emit('toggleRuntime')">{{ props.runtimeCollapsed ? 'Show panels' : 'Hide panels' }}</button>
+          <button class="ghost" @click="emit('reset')">Reset demo</button>
         </div>
       </header>
       <p v-if="props.error" class="ui-error">{{ props.error }}</p>

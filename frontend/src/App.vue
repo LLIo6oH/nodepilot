@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import AppShell from './components/AppShell.vue'
 import { ClientError, api, eventsUrl } from './api/client'
 import type { EventPayload } from './api/types'
@@ -28,15 +28,16 @@ const latestTool = ref('')
 const localStatus = ref<'working' | 'error' | null>(null)
 
 const steps = [
-  'Requesting instance',
-  'Launching runtime',
+  'Preparing runtime session',
+  'Loading Atlas runtime',
   'Booting Atlas',
-  'Configuring workspace',
+  'Preparing workspace',
   'Connecting tools',
   'Atlas is online'
 ]
 
 let source: EventSource | null = null
+let readyTransitionTimer: ReturnType<typeof setTimeout> | null = null
 
 const displayStatus = computed(() => localStatus.value ?? backendStatus.value)
 const ready = computed(() => backendStatus.value === 'ready')
@@ -45,6 +46,13 @@ const latestEvents = computed(() => eventLogs.value.slice(-6).reverse())
 function cleanupEvents() {
   source?.close()
   source = null
+}
+
+function clearReadyTransitionTimer() {
+  if (readyTransitionTimer) {
+    clearTimeout(readyTransitionTimer)
+    readyTransitionTimer = null
+  }
 }
 
 function mapStep(message: string): number {
@@ -97,6 +105,7 @@ async function launchAtlas() {
 }
 
 function openWorkspace() {
+  clearReadyTransitionTimer()
   cleanupEvents()
   screen.value = 'workspace'
 }
@@ -128,6 +137,7 @@ async function sendChat(message: string) {
 }
 
 function resetDemo() {
+  clearReadyTransitionTimer()
   localStorage.removeItem(STORAGE_KEY)
   cleanupEvents()
   screen.value = 'signin'
@@ -166,7 +176,19 @@ onMounted(async () => {
   }
 })
 
+watch([ready, screen], ([isReady, currentScreen]) => {
+  if (!isReady || currentScreen !== 'provisioning') {
+    clearReadyTransitionTimer()
+    return
+  }
+  clearReadyTransitionTimer()
+  readyTransitionTimer = setTimeout(() => {
+    openWorkspace()
+  }, 700)
+})
+
 onBeforeUnmount(() => {
+  clearReadyTransitionTimer()
   cleanupEvents()
 })
 </script>
@@ -185,7 +207,6 @@ onBeforeUnmount(() => {
         :starting-provision="provisionPending"
         :error="uiError"
         @toggle-logs="showLogs = !showLogs"
-        @open-workspace="openWorkspace"
       />
       <WorkspaceScreen
         v-else

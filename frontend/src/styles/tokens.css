@@ -1,18 +1,25 @@
 :root {
-  --bg-0: #06090f;
-  --bg-1: #0d121b;
-  --bg-2: #151d2a;
+  --bg-0: #07090c;
+  --bg-1: #0b0e13;
+  --bg-2: #10141b;
+  --bg-3: #161b24;
+  --bg-4: #1c2230;
+
   --line-1: rgba(255, 255, 255, 0.08);
   --line-2: rgba(255, 255, 255, 0.16);
+
   --fg-0: #edf4ff;
   --fg-1: #c4d0e0;
-  --fg-2: #7f90aa;
+  --fg-2: #8b94a3;
+  --fg-3: #5a6373;
+  --fg-4: #3a414e;
+
   --accent: #59c7ff;
   --accent-soft: rgba(89, 199, 255, 0.18);
   --good: #56db9d;
   --warm: #ffbc5b;
   --bad: #ff6d78;
-  --radius: 14px;
+
   --mono: "JetBrains Mono", "SFMono-Regular", ui-monospace, monospace;
   --sans: "Space Grotesk", "Inter", system-ui, sans-serif;
 }
