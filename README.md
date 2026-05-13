@@ -34,7 +34,7 @@ cd backend && cargo check
 cd frontend && npm run build
 ```
 
-## Docker Compose (MVP Packaging)
+## Docker Production-Style Run
 
 Run full stack:
 
@@ -43,8 +43,9 @@ docker compose up --build
 ```
 
 URLs:
-- Frontend: `http://localhost:3000`
-- Backend health: `http://localhost:8080/health`
+- Frontend: `http://localhost`
+- Backend via frontend reverse proxy: `http://localhost/api/health`
+- Direct backend debug URL (if needed): `http://localhost:8080/health`
 
 Stop services:
 
@@ -58,9 +59,15 @@ Reset persisted volumes (SQLite + workspaces):
 docker compose down -v
 ```
 
+### Deployment Note (EC2 + DuckDNS)
+
+When deployed on EC2 and mapped to DuckDNS, app traffic should use one origin:
+- App: `http://nodepilot-demo.duckdns.org`
+- API through nginx proxy: `http://nodepilot-demo.duckdns.org/api/health`
+
 ## Demo Flow
 
-1. Launch frontend at `http://localhost:5173` (or `http://localhost:3000` via Docker).
+1. Launch frontend at `http://localhost:5173` (local dev) or `http://localhost` (Docker).
 2. Click `Create account & launch Atlas`.
 3. Watch provisioning updates from SSE event stream.
 4. Click `Open workspace` when Atlas is ready.
@@ -71,13 +78,15 @@ docker compose down -v
 - `Run pwd`
 - `Try blocked shell command` (`Run rm -rf /`)
 
-## Backend API
+## Backend API (direct backend paths)
 
 - `GET /health`
 - `POST /agents`
 - `POST /agents/{id}/provision`
 - `GET /agents/{id}/events`
 - `POST /agents/{id}/chat`
+
+When using Docker frontend proxy, these are called as `/api/*` from browser.
 
 ## Supported Tool Routing
 
