@@ -34,9 +34,33 @@ cd backend && cargo check
 cd frontend && npm run build
 ```
 
+## Docker Compose (MVP Packaging)
+
+Run full stack:
+
+```bash
+docker compose up --build
+```
+
+URLs:
+- Frontend: `http://localhost:3000`
+- Backend health: `http://localhost:8080/health`
+
+Stop services:
+
+```bash
+docker compose down
+```
+
+Reset persisted volumes (SQLite + workspaces):
+
+```bash
+docker compose down -v
+```
+
 ## Demo Flow
 
-1. Launch frontend at `http://localhost:5173`.
+1. Launch frontend at `http://localhost:5173` (or `http://localhost:3000` via Docker).
 2. Click `Create account & launch Atlas`.
 3. Watch provisioning updates from SSE event stream.
 4. Click `Open workspace` when Atlas is ready.

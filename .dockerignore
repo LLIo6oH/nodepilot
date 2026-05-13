@@ -1,0 +1,27 @@
+.git
+.gitignore
+
+# Build artifacts
+target/
+backend/target/
+frontend/dist/
+
+# Node dependencies
+node_modules/
+frontend/node_modules/
+
+# Local runtime/state
+*.sqlite
+*.sqlite3
+*.db
+workspaces/*
+!workspaces/.gitkeep
+
+# Local env/logs
+.env
+.env.*
+*.log
+logs/
+
+# Local design references
+design-reference/
