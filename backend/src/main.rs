@@ -7,7 +7,7 @@ mod runtime;
 mod storage;
 mod tools;
 
-use std::net::SocketAddr;
+use std::{net::SocketAddr, path::PathBuf};
 
 use axum::{
     Router,
@@ -26,6 +26,7 @@ pub struct AppState {
     pub service_name: String,
     pub db: SqlitePool,
     pub events: EventBroadcaster,
+    pub workspace_root: PathBuf,
 }
 
 #[tokio::main]
@@ -46,10 +47,15 @@ async fn main() {
         return;
     }
 
+    let workspace_root = std::env::var("WORKSPACES_DIR")
+        .map(PathBuf::from)
+        .unwrap_or_else(|_| PathBuf::from("../workspaces"));
+
     let state = AppState {
         service_name: "nodepilot-backend".to_string(),
         db,
         events: EventBroadcaster::new(),
+        workspace_root,
     };
 
     let app = build_router(state);
@@ -96,6 +102,7 @@ fn build_router(state: AppState) -> Router {
             "/agents/{id}/provision",
             post(agents::handlers::provision_agent),
         )
+        .route("/agents/{id}/chat", post(agents::handlers::chat_with_agent))
         .route(
             "/agents/{id}/events",
             get(agents::handlers::stream_agent_events),

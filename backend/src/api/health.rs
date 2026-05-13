@@ -27,6 +27,8 @@ pub async fn health_check(
 
 #[cfg(test)]
 mod tests {
+    use std::path::PathBuf;
+
     use super::*;
     use sqlx::SqlitePool;
 
@@ -46,6 +48,7 @@ mod tests {
             service_name: "nodepilot-backend".to_string(),
             db: pool,
             events: EventBroadcaster::new(),
+            workspace_root: PathBuf::from("/tmp/nodepilot-test-workspaces"),
         };
 
         let Json(body) = health_check(State(state))

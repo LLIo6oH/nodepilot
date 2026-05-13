@@ -98,7 +98,6 @@ pub async fn update_agent_status(
     Ok(())
 }
 
-#[allow(dead_code)]
 pub async fn create_message(pool: &SqlitePool, message: &Message) -> Result<(), sqlx::Error> {
     sqlx::query(
         r#"
