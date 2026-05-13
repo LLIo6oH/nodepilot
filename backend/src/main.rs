@@ -20,6 +20,7 @@ use tracing::{error, info};
 use tracing_subscriber::EnvFilter;
 
 use crate::events::broadcaster::EventBroadcaster;
+use crate::runtime::RuntimeSettings;
 
 #[derive(Clone, Debug)]
 pub struct AppState {
@@ -27,6 +28,7 @@ pub struct AppState {
     pub db: SqlitePool,
     pub events: EventBroadcaster,
     pub workspace_root: PathBuf,
+    pub runtime: RuntimeSettings,
 }
 
 #[tokio::main]
@@ -56,6 +58,7 @@ async fn main() {
         db,
         events: EventBroadcaster::new(),
         workspace_root,
+        runtime: RuntimeSettings::from_env(),
     };
 
     let app = build_router(state);

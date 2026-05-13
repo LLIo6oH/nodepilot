@@ -1,4 +1,5 @@
 use chrono::Utc;
+use tracing::warn;
 use uuid::Uuid;
 
 use crate::{
@@ -6,6 +7,7 @@ use crate::{
     agents::{handlers::CreateAgentRequest, lifecycle},
     events::broadcaster::LifecycleEvent,
     models::{Agent, AgentEvent, AgentStatus, Message},
+    runtime::docker,
     runtime::workspace::ensure_agent_workspace,
     storage::repositories,
     tools::router,
@@ -92,7 +94,17 @@ pub async fn start_provisioning(
         return Err(axum::http::StatusCode::NOT_FOUND);
     }
 
-    let _ = ensure_agent_workspace(&state.workspace_root, agent_id).await;
+    ensure_agent_workspace(&state.workspace_root, agent_id)
+        .await
+        .map_err(|_| axum::http::StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    if let Err(err) = docker::preflight(&state.runtime).await {
+        if matches!(state.runtime.mode, crate::runtime::RuntimeMode::Auto) {
+            warn!(agent_id = %agent_id, error = %err, "docker preflight failed in auto mode, continuing with simulated runtime");
+        } else {
+            return Err(axum::http::StatusCode::SERVICE_UNAVAILABLE);
+        }
+    }
 
     tokio::spawn(async move {
         let _ = lifecycle::run_provisioning(state, agent_id).await;
@@ -130,7 +142,7 @@ pub async fn chat_with_agent(
         .await
         .map_err(|_| ChatError::internal("failed to persist user message"))?;
 
-    let tool_result = router::route_and_execute(&state.workspace_root, agent_id, trimmed_message)
+    let tool_result = router::route_and_execute(state, agent_id, trimmed_message)
         .await
         .map_err(ChatError::bad_request)?
         .ok_or_else(|| ChatError::bad_request("unsupported tool request"))?;

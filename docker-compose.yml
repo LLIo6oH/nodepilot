@@ -1,16 +1,29 @@
 services:
+  runtime-image:
+    build:
+      context: ./runtime
+      dockerfile: Dockerfile
+    image: nodepilot-runtime:latest
+    command: ["sh", "-lc", "sleep infinity"]
+
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     environment:
       DATABASE_URL: sqlite:///data/nodepilot.sqlite
+      RUNTIME_MODE: docker
+      RUNTIME_IMAGE: nodepilot-runtime:latest
+      RUNTIME_WORKSPACES_VOLUME: nodepilot-workspaces
       WORKSPACES_DIR: /workspaces
     ports:
       - "8080:8080"
     volumes:
       - nodepilot-data:/data
       - nodepilot-workspaces:/workspaces
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - runtime-image
 
   frontend:
     build:
@@ -26,3 +39,4 @@ services:
 volumes:
   nodepilot-data:
   nodepilot-workspaces:
+    name: nodepilot-workspaces

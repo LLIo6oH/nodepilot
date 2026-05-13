@@ -137,6 +137,7 @@ mod tests {
 
     use crate::AppState;
     use crate::events::broadcaster::EventBroadcaster;
+    use crate::runtime::{RuntimeMode, RuntimeSettings};
     use crate::storage;
 
     use super::*;
@@ -157,6 +158,11 @@ mod tests {
                 "/tmp/nodepilot-test-workspaces-{}",
                 Uuid::new_v4()
             )),
+            runtime: RuntimeSettings {
+                mode: RuntimeMode::Simulated,
+                image: "nodepilot-runtime:latest".to_string(),
+                workspaces_volume: "nodepilot-workspaces".to_string(),
+            },
         }
     }
 

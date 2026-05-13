@@ -57,11 +57,12 @@ function clearReadyTransitionTimer() {
 
 function mapStep(message: string): number {
   const lower = message.toLowerCase()
-  if (lower.includes('allocating')) return 1
-  if (lower.includes('preparing')) return 2
-  if (lower.includes('installing')) return 3
-  if (lower.includes('connecting')) return 4
-  if (lower.includes('ready')) return 5
+  if (lower.includes('preparing runtime session')) return 0
+  if (lower.includes('loading atlas runtime')) return 1
+  if (lower.includes('booting atlas') || lower.includes('creating workspace')) return 2
+  if (lower.includes('preparing workspace') || lower.includes('mounting workspace')) return 3
+  if (lower.includes('connecting tools') || lower.includes('registering tools')) return 4
+  if (lower.includes('online') || lower.includes('ready')) return 5
   return stepIndex.value
 }
 

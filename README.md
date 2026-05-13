@@ -7,6 +7,7 @@ NodePilot is a cloud-resident personal AI runtime prototype with:
 - Atlas agent provisioning lifecycle
 - SSE runtime events
 - deterministic tool-routed chat
+- Level 2 runtime sessions: one Docker runtime container per Atlas agent (MVP)
 
 ## Local Development
 
@@ -47,6 +48,13 @@ URLs:
 - Backend via frontend reverse proxy: `http://localhost/api/health`
 - Direct backend debug URL (if needed): `http://localhost:8080/health`
 
+Runtime notes:
+- Backend orchestrates per-agent runtime containers through `/var/run/docker.sock`.
+- Runtime image tag: `nodepilot-runtime:latest`.
+- Shared workspace volume: `nodepilot-workspaces`, mounted at `/workspaces` in backend and runtime containers.
+- Agent working directory inside runtime: `/workspaces/{agent_id}`.
+- Docker socket access is MVP-only and should be replaced by a safer runtime control-plane in production.
+
 Stop services:
 
 ```bash
@@ -70,13 +78,24 @@ When deployed on EC2 and mapped to DuckDNS, app traffic should use one origin:
 1. Launch frontend at `http://localhost:5173` (local dev) or `http://localhost` (Docker).
 2. Click `Create account & launch Atlas`.
 3. Watch provisioning updates from SSE event stream.
-4. Click `Open workspace` when Atlas is ready.
+4. Wait for automatic transition to workspace when Atlas is online.
 5. Try prompts:
 - `Create roadmap.txt`
 - `Read roadmap.txt`
 - `Write follow-up email`
 - `Run pwd`
 - `Try blocked shell command` (`Run rm -rf /`)
+
+Verify runtime container provisioning:
+
+```bash
+docker ps | grep nodepilot-runtime
+curl http://localhost/api/health
+```
+
+Expected shell behavior from UI:
+- `Run pwd` returns `/workspaces/<agent_id>` (from inside the runtime container when `RUNTIME_MODE=docker`).
+- `Run rm -rf /` remains blocked by safety policy.
 
 ## Backend API (direct backend paths)
 

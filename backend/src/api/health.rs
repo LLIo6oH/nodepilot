@@ -32,7 +32,11 @@ mod tests {
     use super::*;
     use sqlx::SqlitePool;
 
-    use crate::{events::broadcaster::EventBroadcaster, storage};
+    use crate::{
+        events::broadcaster::EventBroadcaster,
+        runtime::{RuntimeMode, RuntimeSettings},
+        storage,
+    };
 
     #[tokio::test]
     async fn health_check_reports_database_ok() {
@@ -49,6 +53,11 @@ mod tests {
             db: pool,
             events: EventBroadcaster::new(),
             workspace_root: PathBuf::from("/tmp/nodepilot-test-workspaces"),
+            runtime: RuntimeSettings {
+                mode: RuntimeMode::Simulated,
+                image: "nodepilot-runtime:latest".to_string(),
+                workspaces_volume: "nodepilot-workspaces".to_string(),
+            },
         };
 
         let Json(body) = health_check(State(state))
